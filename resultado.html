@@ -1,0 +1,51 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Resultado | EcoRA</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+</head>
+<body class="bg-gradient-to-b from-green-100 to-green-200 min-h-screen flex items-center justify-center p-4">
+  <div class="bg-white rounded-xl shadow-lg p-6 w-full max-w-md text-center">
+    <h2 class="text-2xl font-bold mb-4">🏁 Resultado Final</h2>
+
+    <p id="greeting" class="text-lg font-semibold text-green-800 mb-2">Olá!</p>
+    <p id="final-score" class="text-4xl font-bold text-green-600 mb-2">0 pontos</p>
+    <p id="feedback" class="text-sm text-gray-600 mb-6">Análise...</p>
+
+    <div class="grid gap-3">
+      <a href="quiz.html" class="bg-green-600 text-white py-2 rounded hover:bg-green-700 transition">🔁 Refazer Quiz</a>
+      <a href="index.html" class="bg-gray-300 text-gray-800 py-2 rounded hover:bg-gray-400 transition">🏠 Voltar ao Início</a>
+    </div>
+  </div>
+
+  <script>
+    const KEY_USER = "ecoRA_username";
+    const KEY_FINAL = "ecoRA_final_score";       // do quiz
+    const KEY_GAME = "ecoRA_lastGameScore";      // do jogo
+
+    const name = localStorage.getItem(KEY_USER) || "Visitante";
+    const quizScore = parseInt(localStorage.getItem(KEY_FINAL)) || 0;
+    const gameScore = parseInt(localStorage.getItem(KEY_GAME)) || 0;
+
+    const lastScore = quizScore > 0 ? quizScore : gameScore;
+
+    document.getElementById("greeting").textContent = `Olá, ${name}!`;
+    document.getElementById("final-score").textContent = `${lastScore} pontos`;
+
+    const feedbackEl = document.getElementById("feedback");
+    if (lastScore >= 80) {
+      feedbackEl.textContent = "Excelente! Você entende muito sobre o meio ambiente 🌱💚";
+    } else if (lastScore >= 40) {
+      feedbackEl.textContent = "Muito bom! Mas dá pra melhorar ainda mais 🌍";
+    } else {
+      feedbackEl.textContent = "Vamos estudar mais sobre o planeta? Tente de novo! 🧐";
+    }
+
+    // limpa os temporários
+    localStorage.removeItem(KEY_FINAL);
+    localStorage.removeItem(KEY_GAME);
+  </script>
+</body>
+</html>

@@ -1,0 +1,6 @@
+git init                      # Inicia o repositório Git local
+git remote add origin https://github.com/V1T1NH000/ecoRA.git
+git branch -M main            # Define o nome do branch como main
+git add .                     # Adiciona todos os arquivos
+git commit -m "first commit" # Faz o primeiro commit
+git push -u origin main      # Envia tudo pro GitHub

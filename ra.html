@@ -1,0 +1,46 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <title>EcoRA RA | Árvore 3D</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <script type="module" src="https://unpkg.com/@google/model-viewer/dist/model-viewer.min.js"></script>
+  <style>
+    body {
+      margin: 0;
+      padding: 0;
+      background: #e0f2f1;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      height: 100vh;
+      font-family: sans-serif;
+    }
+    h1 {
+      margin-bottom: 1rem;
+      font-size: 1.25rem;
+      color: #00695c;
+    }
+    model-viewer {
+      width: 100%;
+      max-width: 500px;
+      height: 500px;
+    }
+  </style>
+</head>
+<body>
+  <h1>🌳 Toque para ver a Árvore em RA</h1>
+
+  <model-viewer
+    src="assets/models/Tree.glb"
+    ar
+    ar-modes="scene-viewer webxr"
+    camera-controls
+    auto-rotate
+    environment-image="neutral"
+    alt="Modelo 3D de uma árvore"
+  >
+  </model-viewer>
+</body>
+</html>

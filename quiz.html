@@ -1,0 +1,235 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Quiz Ambiental | EcoRA</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+</head>
+<body class="bg-gradient-to-b from-green-100 to-green-200 min-h-screen flex items-center justify-center p-4">
+  <div class="bg-white rounded-xl shadow-md p-6 w-full max-w-md text-center">
+    <h2 class="text-2xl font-bold mb-4">🌎 Quiz Ambiental</h2>
+
+    <div class="mb-2 text-sm text-gray-600" id="progress">Pergunta 1 de 5</div>
+    <div class="w-full bg-gray-200 h-2 rounded mb-4 overflow-hidden">
+      <div id="bar" class="h-full rounded bg-green-500" style="width:0%"></div>
+    </div>
+
+    <div id="question" class="text-lg font-medium mb-4">...</div>
+    <div id="options" class="grid gap-3 mb-4"></div>
+    <div id="score" class="text-sm text-gray-700 mb-2">Pontos: 0</div>
+
+    <div id="hint" class="text-xs text-gray-500"></div>
+  </div>
+
+  <!-- sons (coloca arquivos reais em /assets/audio/) -->
+  <audio id="sound-correct" src="./assets/audio/correct.mp3" preload="auto"></audio>
+  <audio id="sound-wrong" src="./assets/audio/wrong.mp3" preload="auto"></audio>
+
+  <script type="module">
+    // user.js logic inline (pode extrair pra módulo se quiser)
+    const KEY_USER = "ecoRA_username";
+    const KEY_SCORE = "ecoRA_total_score";
+
+    const user = {
+      getName() {
+        return localStorage.getItem(KEY_USER) || null;
+      },
+      setName(name) {
+        localStorage.setItem(KEY_USER, name.trim());
+      },
+      getScore() {
+        const v = localStorage.getItem(KEY_SCORE);
+        return v ? parseInt(v, 10) : 0;
+      },
+      addScore(points) {
+        const current = user.getScore();
+        localStorage.setItem(KEY_SCORE, current + points);
+      }
+    };
+
+    // storage wrapper
+    const storage = {
+      get(k) {
+        try { return JSON.parse(localStorage.getItem(k)); }
+        catch { return null; }
+      },
+      set(k, v) {
+        try { localStorage.setItem(k, JSON.stringify(v)); }
+        catch {}
+      },
+      remove(k) {
+        try { localStorage.removeItem(k); }
+        catch {}
+      }
+    };
+
+    // feedback helpers
+    const sounds = {
+      correct: document.getElementById("sound-correct"),
+      wrong: document.getElementById("sound-wrong")
+    };
+    function playSound(type) {
+      const s = sounds[type];
+      if (s) {
+        s.currentTime = 0;
+        s.play().catch(() => {});
+      }
+    }
+    function flashElement(el, correct) {
+      const klass = correct ? "ring-2 ring-green-400" : "ring-2 ring-red-400";
+      el.classList.add(...klass.split(" "));
+      setTimeout(() => {
+        el.classList.remove(...klass.split(" "));
+      }, 500);
+    }
+
+    // perguntas conforme você mandou
+    const quizData = [
+      {
+        q: "Qual dessas ações ajuda a economizar água em casa?",
+        options: [
+          "A) Deixar a torneira aberta enquanto escova os dentes",
+          "B) Usar mangueira para lavar a calçada",
+          "C) Tomar banhos mais curtos"
+        ],
+        answer: 2 // índice 2 = C
+      },
+      {
+        q: "Qual é a principal causa do aquecimento global?",
+        options: [
+          "A) Emissão de gases de efeito estufa",
+          "B) Fases da lua",
+          "C) Polinização das flores"
+        ],
+        answer: 0 // A
+      },
+      {
+        q: "Qual dos seguintes materiais é reciclável?",
+        options: [
+          "A) Papelão",
+          "B) Papel higiênico usado",
+          "C) Restos de comida"
+        ],
+        answer: 0 // A
+      },
+      {
+        q: "O que significa o termo “desmatamento”?",
+        options: [
+          "A) Plantio de novas árvores",
+          "B) Retirada da vegetação de uma área",
+          "C) Criação de parques naturais"
+        ],
+        answer: 1 // B
+      },
+      {
+        q: "Qual é a energia considerada limpa e renovável?",
+        options: [
+          "A) Energia solar",
+          "B) Energia do petróleo",
+          "C) Energia do carvão mineral"
+        ],
+        answer: 0 // A
+      }
+    ];
+
+    // estado
+    let current = storage.get("ecoRA_quiz_current") || 0;
+    let quizScore = storage.get("ecoRA_quiz_score") || 0;
+
+    const questionEl = document.getElementById("question");
+    const optionsEl = document.getElementById("options");
+    const progressEl = document.getElementById("progress");
+    const barEl = document.getElementById("bar");
+    const scoreEl = document.getElementById("score");
+    const hintEl = document.getElementById("hint");
+
+    function updateProgressBar() {
+      const percent = ((current) / quizData.length) * 100;
+      barEl.style.width = percent + "%";
+      progressEl.textContent = `Pergunta ${Math.min(current + 1, quizData.length)} de ${quizData.length}`;
+    }
+
+    function renderQuestion() {
+      if (current >= quizData.length) return finish();
+
+      updateProgressBar();
+      const { q, options, answer } = quizData[current];
+      questionEl.textContent = q;
+      optionsEl.innerHTML = "";
+      hintEl.textContent = "";
+
+      options.forEach((text, i) => {
+        const btn = document.createElement("button");
+        btn.className = "option-btn w-full py-2 px-4 bg-gray-100 rounded shadow text-left hover:bg-gray-200 transition flex items-center gap-2";
+        btn.textContent = text;
+        btn.dataset.index = i;
+
+        btn.addEventListener("click", () => {
+          const isCorrect = i === answer;
+
+          if (isCorrect) {
+            quizScore += 10;
+            playSound("correct");
+            flashElement(btn, true);
+          } else {
+            playSound("wrong");
+            flashElement(btn, false);
+            // marca a correta
+            const correctBtn = optionsEl.querySelector(`button[data-index="${answer}"]`);
+            if (correctBtn) {
+              correctBtn.classList.add("bg-green-100");
+              correctBtn.classList.add("ring-2", "ring-green-500");
+            }
+          }
+
+          // desativa todos
+          optionsEl.querySelectorAll("button").forEach(b => b.disabled = true);
+
+          // salva progresso
+          storage.set("ecoRA_quiz_score", quizScore);
+          storage.set("ecoRA_quiz_current", current + 1);
+
+          // dica inteligente (exemplo simples)
+          if (!isCorrect) {
+            if (current === 0) hintEl.textContent = "Dica: Tomar banhos mais curtos economiza muita água.";
+            if (current === 1) hintEl.textContent = "Dica: Gases como CO₂ aprisionam calor na atmosfera.";
+            if (current === 2) hintEl.textContent = "Dica: Papelão pode ser reciclado se limpo.";
+            if (current === 3) hintEl.textContent = "Dica: Desmatamento é tirar vegetação.";
+            if (current === 4) hintEl.textContent = "Dica: Energia solar vem do sol e é renovável.";
+          }
+
+          // próxima pergunta após delay
+          setTimeout(() => {
+            current++;
+            if (current < quizData.length) {
+              renderQuestion();
+            } else {
+              finish();
+            }
+          }, 800);
+        });
+
+        optionsEl.appendChild(btn);
+      });
+
+      scoreEl.textContent = `Pontos: ${quizScore}`;
+    }
+
+    function finish() {
+      // adiciona ao total do usuário
+      user.addScore(quizScore);
+      // limpa estado do quiz
+      storage.remove("ecoRA_quiz_current");
+      storage.remove("ecoRA_quiz_score");
+      storage.set("ecoRA_final_score", quizScore); // opcional
+      // redireciona
+      window.location.href = "resultado.html";
+    }
+
+    document.addEventListener("DOMContentLoaded", () => {
+      renderQuestion();
+    });
+  </script>
+</body>
+</html>

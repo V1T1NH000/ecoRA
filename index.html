@@ -1,0 +1,122 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>EcoRA</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script src="https://unpkg.com/@lottiefiles/lottie-player@latest/dist/lottie-player.js"></script>
+</head>
+<body class="bg-gradient-to-b from-green-100 to-green-200 min-h-screen flex flex-col items-center justify-center px-4">
+
+  <!-- Animação do personagem -->
+  <div class="w-48 relative mb-4" style="height: 200px;">
+    <lottie-player
+      src="https://assets2.lottiefiles.com/packages/lf20_tno6cg2w.json"
+      background="transparent"
+      speed="1"
+      loop
+      autoplay
+      style="width: 192px; height: 192px; position: absolute; left: 50%; transform: translateX(-50%) translateY(0); animation: floatUpDown 3s ease-in-out infinite;"
+    ></lottie-player>
+  </div>
+
+  <style>
+    @keyframes floatUpDown {
+      0%, 100% { transform: translateX(-50%) translateY(0); }
+      50% { transform: translateX(-50%) translateY(-15px); }
+    }
+  </style>
+
+  <!-- Container de boas-vindas -->
+  <div id="welcome-container" class="w-full max-w-md mb-6">
+    <!-- Preenchido por JS -->
+  </div>
+
+  <!-- Botões principais -->
+  <div class="grid gap-4 w-full max-w-sm text-center">
+    <a href="quiz.html" class="bg-green-500 text-white py-3 rounded-xl shadow-md hover:bg-green-600 transition">📚 Quiz Ambiental</a>
+    <a href="jogo.html" class="bg-yellow-500 text-white py-3 rounded-xl shadow-md hover:bg-yellow-600 transition">♻️ Jogo de Reciclagem</a>
+    <a href="ra.html" class="bg-blue-500 text-white py-3 rounded-xl shadow-md hover:bg-blue-600 transition">🔎 RA via QR Code</a>
+    <a href="resultado.html" class="bg-purple-500 text-white py-3 rounded-xl shadow-md hover:bg-purple-600 transition">🏆 Ver Resultado</a>
+  </div>
+
+  <!-- Script JS embutido -->
+  <script>
+    const KEY_USER = "ecoRA_username";
+    const KEY_SCORE = "ecoRA_total_score";
+
+    const user = {
+      getName() {
+        return localStorage.getItem(KEY_USER) || null;
+      },
+      setName(name) {
+        localStorage.setItem(KEY_USER, name.trim());
+      },
+      clearName() {
+        localStorage.removeItem(KEY_USER);
+      },
+      getScore() {
+        const v = localStorage.getItem(KEY_SCORE);
+        return v ? parseInt(v, 10) : 0;
+      },
+      addScore(points) {
+        const current = user.getScore();
+        localStorage.setItem(KEY_SCORE, current + points);
+      },
+      resetScore() {
+        localStorage.setItem(KEY_SCORE, 0);
+      }
+    };
+
+    function renderWelcome() {
+      const container = document.getElementById("welcome-container");
+      container.innerHTML = "";
+
+      const name = user.getName();
+      const score = user.getScore();
+
+      if (!name) {
+        const promptDiv = document.createElement("div");
+        promptDiv.className = "bg-white p-6 rounded-xl shadow-md";
+        promptDiv.innerHTML = `
+          <p class="mb-3 text-lg font-semibold text-gray-800">Qual é o seu nome?</p>
+          <input id="name-input" class="w-full border px-3 py-2 rounded mb-3" placeholder="Seu nome" />
+          <button id="save-name" class="w-full bg-green-600 text-white py-2 rounded hover:bg-green-700 transition">Começar</button>
+        `;
+        container.appendChild(promptDiv);
+
+        document.getElementById("save-name").onclick = () => {
+          const v = document.getElementById("name-input").value.trim();
+          if (v) {
+            user.setName(v);
+            renderWelcome();
+          } else {
+            alert("Coloca um nome aí, maninho!");
+          }
+        };
+      } else {
+        const card = document.createElement("div");
+        card.className = "bg-white p-6 rounded-xl shadow-md flex flex-col gap-2";
+        card.innerHTML = `
+          <div class="flex justify-between items-center">
+            <div>
+              <p class="text-lg font-bold text-gray-800">Olá, <span id="username-display">${name}</span> 👋</p>
+              <p class="text-sm text-gray-600">Pontuação total: <span id="score-display">${score}</span> pontos</p>
+            </div>
+            <button id="change-name" class="text-xs text-blue-600 underline hover:text-blue-800">Mudar</button>
+          </div>
+        `;
+        container.appendChild(card);
+
+        document.getElementById("change-name").onclick = () => {
+          user.clearName();
+          renderWelcome();
+        };
+      }
+    }
+
+    document.addEventListener("DOMContentLoaded", renderWelcome);
+  </script>
+</body>
+</html>
