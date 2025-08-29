@@ -8,6 +8,9 @@
   <script src="https://unpkg.com/@lottiefiles/lottie-player@latest/dist/lottie-player.js"></script>
   <!-- Supabase -->
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <!-- Importar o env pra inicializar na supabase -->
+  <script src="env.js"></script>
+
 </head>
 <body class="bg-gradient-to-b from-green-100 to-green-200 min-h-screen flex flex-col items-center justify-center px-4">
 
@@ -22,6 +25,7 @@
       style="width: 192px; height: 192px; position: absolute; left: 50%; transform: translateX(-50%) translateY(0); animation: floatUpDown 3s ease-in-out infinite;"
     ></lottie-player>
   </div>
+
 
   <style>
     @keyframes floatUpDown {
@@ -44,8 +48,8 @@
   <!-- Script JS -->
   <script>
     // --- Supabase Config ---
-    const SUPABASE_URL = "https://astbpspadyuybblvxpkf.supabase.co";
-    const SUPABASE_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImFzdGJwc3BhZHl1eWJibHZ4cGtmIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTY0ODE4MjIsImV4cCI6MjA3MjA1NzgyMn0.udxKFuTgbJGwb-yxwPFRKpxoQoVcxnqLBj2AUNGGLlc";
+    const SUPABASE_URL = window.__env?.NEXT_PUBLIC_SUPABASE_URL || "";
+    const SUPABASE_KEY = window.__env?.NEXT_PUBLIC_SUPABASE_ANON_KEY || "";
     const supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
 
     const KEY_USER = "ecoRA_username";

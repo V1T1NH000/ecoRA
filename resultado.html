@@ -24,8 +24,8 @@
 
   <script>
     // --- Supabase Config ---
-    const SUPABASE_URL = "https://astbpspadyuybblvxpkf.supabase.co";
-    const SUPABASE_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImFzdGJwc3BhZHl1eWJibHZ4cGtmIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTY0ODE4MjIsImV4cCI6MjA3MjA1NzgyMn0.udxKFuTgbJGwb-yxwPFRKpxoQoVcxnqLBj2AUNGGLlc";
+    const SUPABASE_URL = window.__env?.NEXT_PUBLIC_SUPABASE_URL || "";
+    const SUPABASE_KEY = window.__env?.NEXT_PUBLIC_SUPABASE_ANON_KEY || "";
     const supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
 
     // --- LocalStorage keys ---
