@@ -10,7 +10,6 @@
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
   <!-- Importar o env pra inicializar na supabase -->
   <script src="env.js"></script>
-
 </head>
 <body class="bg-gradient-to-b from-green-100 to-green-200 min-h-screen flex flex-col items-center justify-center px-4">
 
@@ -25,7 +24,6 @@
       style="width: 192px; height: 192px; position: absolute; left: 50%; transform: translateX(-50%) translateY(0); animation: floatUpDown 3s ease-in-out infinite;"
     ></lottie-player>
   </div>
-
 
   <style>
     @keyframes floatUpDown {
@@ -63,10 +61,13 @@
         localStorage.setItem(KEY_USER, name.trim());
         localStorage.setItem(KEY_SCORE, 0);
 
-        // tenta inserir no Supabase, se já existe ignora
+        // aqui usamos UPSERT pra não duplicar
         const { error } = await supabase
           .from("users")
-          .insert([{ username: name.trim(), score: 0 }], { ignoreDuplicates: true });
+          .upsert(
+            { username: name.trim(), score: 0 },
+            { onConflict: "username" }
+          );
 
         if (error) console.error("Erro ao salvar usuário:", error);
       },
