@@ -5,6 +5,8 @@
   <meta name="viewport" content="width=device-width, initial-scale=1" />
   <title>Resultado | EcoRA</title>
   <script src="https://cdn.tailwindcss.com"></script>
+  <!-- Supabase -->
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 </head>
 <body class="bg-gradient-to-b from-green-100 to-green-200 min-h-screen flex items-center justify-center p-4">
   <div class="bg-white rounded-xl shadow-lg p-6 w-full max-w-md text-center">
@@ -21,16 +23,23 @@
   </div>
 
   <script>
-    const KEY_USER = "ecoRA_username";
-    const KEY_FINAL = "ecoRA_final_score";       // do quiz
-    const KEY_GAME = "ecoRA_lastGameScore";      // do jogo
+    // --- Supabase Config ---
+    const SUPABASE_URL = "https://astbpspadyuybblvxpkf.supabase.co";
+    const SUPABASE_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImFzdGJwc3BhZHl1eWJibHZ4cGtmIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTY0ODE4MjIsImV4cCI6MjA3MjA1NzgyMn0.udxKFuTgbJGwb-yxwPFRKpxoQoVcxnqLBj2AUNGGLlc";
+    const supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
 
+    // --- LocalStorage keys ---
+    const KEY_USER = "ecoRA_username";
+    const KEY_FINAL = "ecoRA_final_score";  
+    const KEY_GAME = "ecoRA_lastGameScore"; 
+
+    // --- Recupera dados ---
     const name = localStorage.getItem(KEY_USER) || "Visitante";
     const quizScore = parseInt(localStorage.getItem(KEY_FINAL)) || 0;
     const gameScore = parseInt(localStorage.getItem(KEY_GAME)) || 0;
-
     const lastScore = quizScore > 0 ? quizScore : gameScore;
 
+    // --- Mostra na tela ---
     document.getElementById("greeting").textContent = `Olá, ${name}!`;
     document.getElementById("final-score").textContent = `${lastScore} pontos`;
 
@@ -43,9 +52,29 @@
       feedbackEl.textContent = "Vamos estudar mais sobre o planeta? Tente de novo! 🧐";
     }
 
-    // limpa os temporários
+    // --- Limpa temporários ---
     localStorage.removeItem(KEY_FINAL);
     localStorage.removeItem(KEY_GAME);
+
+    // --- Salva score no Supabase ---
+    async function saveScore() {
+      const { data, error } = await supabase
+        .from("users") // 👈 usa a tabela que já tem username, score, created_at
+        .insert([
+          { username: name, score: lastScore, created_at: new Date() }
+        ]);
+
+      if (error) {
+        console.error("Erro ao salvar no Supabase:", error);
+      } else {
+        console.log("Pontuação salva no Supabase:", data);
+      }
+    }
+
+    // só salva se tiver nome + pontuação válida
+    if (name && lastScore > 0) {
+      saveScore();
+    }
   </script>
 </body>
 </html>
