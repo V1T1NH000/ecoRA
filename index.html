@@ -6,14 +6,12 @@
   <title>EcoRA</title>
   <script src="https://cdn.tailwindcss.com"></script>
   <script src="https://unpkg.com/@lottiefiles/lottie-player@latest/dist/lottie-player.js"></script>
-  <!-- Supabase -->
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-  <!-- Importar o env pra inicializar na supabase -->
-  <script src="env.js"></script>
+  <script src="env.js"></script> <!-- define window.__env -->
 </head>
 <body class="bg-gradient-to-b from-green-100 to-green-200 min-h-screen flex flex-col items-center justify-center px-4">
 
-  <!-- Animação do personagem -->
+  <!-- Animação -->
   <div class="w-48 relative mb-4" style="height: 200px;">
     <lottie-player
       src="https://assets2.lottiefiles.com/packages/lf20_tno6cg2w.json"
@@ -27,28 +25,25 @@
 
   <style>
     @keyframes floatUpDown {
-      0%, 100% { transform: translateX(-50%) translateY(0); }
+      0%,100% { transform: translateX(-50%) translateY(0); }
       50% { transform: translateX(-50%) translateY(-15px); }
     }
   </style>
 
-  <!-- Container de boas-vindas -->
   <div id="welcome-container" class="w-full max-w-md mb-6"></div>
 
-  <!-- Botões principais -->
   <div class="grid gap-4 w-full max-w-sm text-center">
     <a href="quiz.html" class="bg-green-500 text-white py-3 rounded-xl shadow-md hover:bg-green-600 transition">📚 Quiz Ambiental</a>
     <a href="jogo.html" class="bg-yellow-500 text-white py-3 rounded-xl shadow-md hover:bg-yellow-600 transition">♻️ Jogo de Reciclagem</a>
-    <a href="ra.html" class="bg-blue-500 text-white py-3 rounded-xl shadow-md hover:bg-blue-600 transition">🔎 RA via QR Code</a>
+    <a href="ra.html" class="bg-blue-500 text-white py-3 rounded-xl shadow-md hover:bg-blue-600 transition">🔎 RA</a>
     <a href="resultado.html" class="bg-purple-500 text-white py-3 rounded-xl shadow-md hover:bg-purple-600 transition">🏆 Ver Resultado</a>
   </div>
 
-  <!-- Script JS -->
   <script>
-    // --- Supabase Config ---
-    const SUPABASE_URL = window.__env?.NEXT_PUBLIC_SUPABASE_URL || "";
-    const SUPABASE_KEY = window.__env?.NEXT_PUBLIC_SUPABASE_ANON_KEY || "";
-    const supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+    // Inicializa Supabase após carregar env.js
+    const SUPABASE_URL = window.__env?.NEXT_PUBLIC_SUPABASE_URL;
+    const SUPABASE_KEY = window.__env?.NEXT_PUBLIC_SUPABASE_ANON_KEY;
+    const supabase = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
 
     const KEY_USER = "ecoRA_username";
     const KEY_SCORE = "ecoRA_total_score";
@@ -61,11 +56,11 @@
         localStorage.setItem(KEY_USER, name.trim());
         localStorage.setItem(KEY_SCORE, 0);
 
-        // aqui usamos UPSERT pra não duplicar
+        // UPSERT evita duplicar usuário
         const { error } = await supabase
           .from("users")
           .upsert(
-            { username: name.trim(), score: 0 },
+            { username: name.trim(), score: 0, created_at: new Date() },
             { onConflict: "username" }
           );
 
@@ -103,9 +98,7 @@
           if (v) {
             await user.setName(v);
             renderWelcome();
-          } else {
-            alert("Coloca um nome aí, maninho!");
-          }
+          } else alert("Coloca um nome aí, maninho!");
         };
       } else {
         const card = document.createElement("div");

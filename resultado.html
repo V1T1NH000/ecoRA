@@ -5,13 +5,12 @@
   <meta name="viewport" content="width=device-width, initial-scale=1" />
   <title>Resultado | EcoRA</title>
   <script src="https://cdn.tailwindcss.com"></script>
-  <!-- Supabase -->
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <script src="env.js"></script>
 </head>
 <body class="bg-gradient-to-b from-green-100 to-green-200 min-h-screen flex items-center justify-center p-4">
   <div class="bg-white rounded-xl shadow-lg p-6 w-full max-w-md text-center">
     <h2 class="text-2xl font-bold mb-4">🏁 Resultado Final</h2>
-
     <p id="greeting" class="text-lg font-semibold text-green-800 mb-2">Olá!</p>
     <p id="final-score" class="text-4xl font-bold text-green-600 mb-2">0 pontos</p>
     <p id="feedback" class="text-sm text-gray-600 mb-6">Análise...</p>
@@ -23,58 +22,43 @@
   </div>
 
   <script>
-    // --- Supabase Config ---
-    const SUPABASE_URL = window.__env?.NEXT_PUBLIC_SUPABASE_URL || "";
-    const SUPABASE_KEY = window.__env?.NEXT_PUBLIC_SUPABASE_ANON_KEY || "";
-    const supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+    const SUPABASE_URL = window.__env?.NEXT_PUBLIC_SUPABASE_URL;
+    const SUPABASE_KEY = window.__env?.NEXT_PUBLIC_SUPABASE_ANON_KEY;
+    const supabase = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
 
-    // --- LocalStorage keys ---
     const KEY_USER = "ecoRA_username";
-    const KEY_FINAL = "ecoRA_final_score";  
-    const KEY_GAME = "ecoRA_lastGameScore"; 
+    const KEY_FINAL = "ecoRA_final_score";
+    const KEY_GAME = "ecoRA_lastGameScore";
 
-    // --- Recupera dados ---
     const name = localStorage.getItem(KEY_USER) || "Visitante";
     const quizScore = parseInt(localStorage.getItem(KEY_FINAL)) || 0;
     const gameScore = parseInt(localStorage.getItem(KEY_GAME)) || 0;
     const lastScore = quizScore > 0 ? quizScore : gameScore;
 
-    // --- Mostra na tela ---
     document.getElementById("greeting").textContent = `Olá, ${name}!`;
     document.getElementById("final-score").textContent = `${lastScore} pontos`;
 
     const feedbackEl = document.getElementById("feedback");
-    if (lastScore >= 80) {
-      feedbackEl.textContent = "Excelente! Você entende muito sobre o meio ambiente 🌱💚";
-    } else if (lastScore >= 40) {
-      feedbackEl.textContent = "Muito bom! Mas dá pra melhorar ainda mais 🌍";
-    } else {
-      feedbackEl.textContent = "Vamos estudar mais sobre o planeta? Tente de novo! 🧐";
-    }
+    if (lastScore >= 80) feedbackEl.textContent = "Excelente! Você entende muito sobre o meio ambiente 🌱💚";
+    else if (lastScore >= 40) feedbackEl.textContent = "Muito bom! Mas dá pra melhorar ainda mais 🌍";
+    else feedbackEl.textContent = "Vamos estudar mais sobre o planeta? Tente de novo! 🧐";
 
-    // --- Limpa temporários ---
     localStorage.removeItem(KEY_FINAL);
     localStorage.removeItem(KEY_GAME);
 
-    // --- Salva score no Supabase ---
+    // --- Salva ou atualiza score
     async function saveScore() {
       const { data, error } = await supabase
-        .from("users") // 👈 usa a tabela que já tem username, score, created_at
-        .insert([
-          { username: name, score: lastScore, created_at: new Date() }
-        ]);
-
-      if (error) {
-        console.error("Erro ao salvar no Supabase:", error);
-      } else {
-        console.log("Pontuação salva no Supabase:", data);
-      }
+        .from("users")
+        .upsert(
+          { username: name, score: lastScore, updated_at: new Date() },
+          { onConflict: "username" }
+        );
+      if (error) console.error("Erro ao salvar no Supabase:", error);
+      else console.log("Pontuação salva no Supabase:", data);
     }
 
-    // só salva se tiver nome + pontuação válida
-    if (name && lastScore > 0) {
-      saveScore();
-    }
+    if (name && lastScore > 0) saveScore();
   </script>
 </body>
 </html>
