@@ -2,63 +2,102 @@
 <html lang="pt-BR">
 <head>
   <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
   <title>Resultado | EcoRA</title>
   <script src="https://cdn.tailwindcss.com"></script>
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-  <script src="env.js"></script>
 </head>
 <body class="bg-gradient-to-b from-green-100 to-green-200 min-h-screen flex items-center justify-center p-4">
-  <div class="bg-white rounded-xl shadow-lg p-6 w-full max-w-md text-center">
-    <h2 class="text-2xl font-bold mb-4">🏁 Resultado Final</h2>
-    <p id="greeting" class="text-lg font-semibold text-green-800 mb-2">Olá!</p>
-    <p id="final-score" class="text-4xl font-bold text-green-600 mb-2">0 pontos</p>
-    <p id="feedback" class="text-sm text-gray-600 mb-6">Análise...</p>
+  <div class="bg-white rounded-xl shadow-md p-6 w-full max-w-md text-center">
+    <h2 class="text-2xl font-bold mb-4">🎉 Resultado do Quiz</h2>
+    
+    <!-- nome do usuário -->
+    <div id="user-section" class="mb-4"></div>
 
-    <div class="grid gap-3">
-      <a href="quiz.html" class="bg-green-600 text-white py-2 rounded hover:bg-green-700 transition">🔁 Refazer Quiz</a>
-      <a href="index.html" class="bg-gray-300 text-gray-800 py-2 rounded hover:bg-gray-400 transition">🏠 Voltar ao Início</a>
-    </div>
+    <!-- pontuação -->
+    <p id="score" class="text-lg font-semibold text-green-700 mb-4"></p>
+
+    <!-- mensagem -->
+    <p class="text-sm text-gray-600 mb-6">Obrigado por participar! 🌱</p>
+
+    <!-- botão para voltar ao início -->
+    <a href="index.html" class="bg-green-500 hover:bg-green-600 text-white px-4 py-2 rounded shadow">
+      Voltar ao Início
+    </a>
   </div>
 
-  <script>
-    const SUPABASE_URL = window.__env?.NEXT_PUBLIC_SUPABASE_URL;
-    const SUPABASE_KEY = window.__env?.NEXT_PUBLIC_SUPABASE_ANON_KEY;
-    const supabase = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+  <script type="module">
+    import { createClient } from "https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/+esm";
 
+    // ⚡ configs do Supabase
+    const SUPABASE_URL = "https://YOUR_PROJECT.supabase.co";
+    const SUPABASE_ANON_KEY = "YOUR_PUBLIC_ANON_KEY";
+    const supabase = createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+
+    // keys locais
     const KEY_USER = "ecoRA_username";
+    const KEY_SCORE = "ecoRA_total_score";
     const KEY_FINAL = "ecoRA_final_score";
-    const KEY_GAME = "ecoRA_lastGameScore";
 
-    const name = localStorage.getItem(KEY_USER) || "Visitante";
-    const quizScore = parseInt(localStorage.getItem(KEY_FINAL)) || 0;
-    const gameScore = parseInt(localStorage.getItem(KEY_GAME)) || 0;
-    const lastScore = quizScore > 0 ? quizScore : gameScore;
+    const userSection = document.getElementById("user-section");
+    const scoreEl = document.getElementById("score");
 
-    document.getElementById("greeting").textContent = `Olá, ${name}!`;
-    document.getElementById("final-score").textContent = `${lastScore} pontos`;
-
-    const feedbackEl = document.getElementById("feedback");
-    if (lastScore >= 80) feedbackEl.textContent = "Excelente! Você entende muito sobre o meio ambiente 🌱💚";
-    else if (lastScore >= 40) feedbackEl.textContent = "Muito bom! Mas dá pra melhorar ainda mais 🌍";
-    else feedbackEl.textContent = "Vamos estudar mais sobre o planeta? Tente de novo! 🧐";
-
-    localStorage.removeItem(KEY_FINAL);
-    localStorage.removeItem(KEY_GAME);
-
-    // --- Salva ou atualiza score
-    async function saveScore() {
-      const { data, error } = await supabase
-        .from("users")
-        .upsert(
-          { username: name, score: lastScore, updated_at: new Date() },
-          { onConflict: "username" }
-        );
-      if (error) console.error("Erro ao salvar no Supabase:", error);
-      else console.log("Pontuação salva no Supabase:", data);
+    function getUser() {
+      return localStorage.getItem(KEY_USER) || null;
+    }
+    function setUser(name) {
+      localStorage.setItem(KEY_USER, name.trim());
+    }
+    function getTotalScore() {
+      return parseInt(localStorage.getItem(KEY_SCORE) || "0", 10);
+    }
+    function getFinalScore() {
+      return parseInt(localStorage.getItem(KEY_FINAL) || "0", 10);
     }
 
-    if (name && lastScore > 0) saveScore();
+    async function saveToSupabase(username, score) {
+      try {
+        const { error } = await supabase.from("users").upsert([
+          { username, score }
+        ]);
+        if (error) throw error;
+        console.log("Salvo com sucesso no Supabase!");
+      } catch (err) {
+        console.error("Erro ao salvar no Supabase:", err);
+      }
+    }
+
+    document.addEventListener("DOMContentLoaded", async () => {
+      const finalScore = getFinalScore();
+      const totalScore = getTotalScore();
+      let username = getUser();
+
+      scoreEl.textContent = `Você fez ${finalScore} pontos neste quiz. Total acumulado: ${totalScore}`;
+
+      if (!username) {
+        // mostra input
+        userSection.innerHTML = `
+          <input id="name-input" type="text" placeholder="Digite seu nome" 
+            class="border p-2 rounded w-full mb-2" />
+          <button id="save-btn" 
+            class="bg-green-500 hover:bg-green-600 text-white px-3 py-1 rounded">
+            Salvar
+          </button>
+        `;
+
+        document.getElementById("save-btn").addEventListener("click", async () => {
+          const name = document.getElementById("name-input").value.trim();
+          if (!name) return alert("Digite um nome válido!");
+          setUser(name);
+          userSection.innerHTML = `<p class="text-lg font-medium">👤 ${name}</p>`;
+          await saveToSupabase(name, totalScore);
+        });
+      } else {
+        // já tem nome salvo
+        userSection.innerHTML = `<p class="text-lg font-medium">👤 ${username}</p>`;
+        await saveToSupabase(username, totalScore);
+      }
+    });
   </script>
 </body>
 </html>

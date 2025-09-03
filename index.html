@@ -6,12 +6,14 @@
   <title>EcoRA</title>
   <script src="https://cdn.tailwindcss.com"></script>
   <script src="https://unpkg.com/@lottiefiles/lottie-player@latest/dist/lottie-player.js"></script>
+  <!-- Supabase -->
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-  <script src="env.js"></script> <!-- define window.__env -->
+  <!-- Importar o env.js -->
+  <script src="env.js"></script>
 </head>
 <body class="bg-gradient-to-b from-green-100 to-green-200 min-h-screen flex flex-col items-center justify-center px-4">
 
-  <!-- Animação -->
+  <!-- Animação do personagem -->
   <div class="w-48 relative mb-4" style="height: 200px;">
     <lottie-player
       src="https://assets2.lottiefiles.com/packages/lf20_tno6cg2w.json"
@@ -25,13 +27,15 @@
 
   <style>
     @keyframes floatUpDown {
-      0%,100% { transform: translateX(-50%) translateY(0); }
+      0%, 100% { transform: translateX(-50%) translateY(0); }
       50% { transform: translateX(-50%) translateY(-15px); }
     }
   </style>
 
+  <!-- Container de boas-vindas -->
   <div id="welcome-container" class="w-full max-w-md mb-6"></div>
 
+  <!-- Botões principais -->
   <div class="grid gap-4 w-full max-w-sm text-center">
     <a href="quiz.html" class="bg-green-500 text-white py-3 rounded-xl shadow-md hover:bg-green-600 transition">📚 Quiz Ambiental</a>
     <a href="jogo.html" class="bg-yellow-500 text-white py-3 rounded-xl shadow-md hover:bg-yellow-600 transition">♻️ Jogo de Reciclagem</a>
@@ -39,89 +43,90 @@
     <a href="resultado.html" class="bg-purple-500 text-white py-3 rounded-xl shadow-md hover:bg-purple-600 transition">🏆 Ver Resultado</a>
   </div>
 
+  <!-- Script JS -->
   <script>
-    // Inicializa Supabase após carregar env.js
-    const SUPABASE_URL = window.__env?.NEXT_PUBLIC_SUPABASE_URL;
-    const SUPABASE_KEY = window.__env?.NEXT_PUBLIC_SUPABASE_ANON_KEY;
-    const supabase = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+    document.addEventListener("DOMContentLoaded", () => {
+      const SUPABASE_URL = window.__env?.NEXT_PUBLIC_SUPABASE_URL || "";
+      const SUPABASE_KEY = window.__env?.NEXT_PUBLIC_SUPABASE_ANON_KEY || "";
+      const supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
 
-    const KEY_USER = "ecoRA_username";
-    const KEY_SCORE = "ecoRA_total_score";
+      const KEY_USER = "ecoRA_username";
+      const KEY_SCORE = "ecoRA_total_score";
 
-    const user = {
-      getName() {
-        return localStorage.getItem(KEY_USER) || null;
-      },
-      async setName(name) {
-        localStorage.setItem(KEY_USER, name.trim());
-        localStorage.setItem(KEY_SCORE, 0);
+      const user = {
+        getName() {
+          return localStorage.getItem(KEY_USER) || null;
+        },
+        async setName(name) {
+          localStorage.setItem(KEY_USER, name.trim());
+          localStorage.setItem(KEY_SCORE, 0);
 
-        // UPSERT evita duplicar usuário
-        const { error } = await supabase
-          .from("users")
-          .upsert(
-            { username: name.trim(), score: 0, created_at: new Date() },
-            { onConflict: "username" }
-          );
+          // salva no Supabase sem duplicar
+          const { error } = await supabase
+            .from("users")
+            .upsert({ username: name.trim(), score: 0 }, { onConflict: "username" });
 
-        if (error) console.error("Erro ao salvar usuário:", error);
-      },
-      clearName() {
-        localStorage.removeItem(KEY_USER);
-        localStorage.removeItem(KEY_SCORE);
-      },
-      getScore() {
-        const v = localStorage.getItem(KEY_SCORE);
-        return v ? parseInt(v, 10) : 0;
-      }
-    };
+          if (error) console.error("Erro ao salvar usuário:", error);
+        },
+        clearName() {
+          localStorage.removeItem(KEY_USER);
+          localStorage.removeItem(KEY_SCORE);
+        },
+        getScore() {
+          const v = localStorage.getItem(KEY_SCORE);
+          return v ? parseInt(v, 10) : 0;
+        }
+      };
 
-    function renderWelcome() {
-      const container = document.getElementById("welcome-container");
-      container.innerHTML = "";
+      function renderWelcome() {
+        const container = document.getElementById("welcome-container");
+        container.innerHTML = "";
 
-      const name = user.getName();
-      const score = user.getScore();
+        const name = user.getName();
+        const score = user.getScore();
 
-      if (!name) {
-        const promptDiv = document.createElement("div");
-        promptDiv.className = "bg-white p-6 rounded-xl shadow-md";
-        promptDiv.innerHTML = `
-          <p class="mb-3 text-lg font-semibold text-gray-800">Defina seu nome de usuário!</p>
-          <input id="name-input" class="w-full border px-3 py-2 rounded mb-3" placeholder="Seu nome" />
-          <button id="save-name" class="w-full bg-green-600 text-white py-2 rounded hover:bg-green-700 transition">Começar</button>
-        `;
-        container.appendChild(promptDiv);
+        if (!name) {
+          const promptDiv = document.createElement("div");
+          promptDiv.className = "bg-white p-6 rounded-xl shadow-md";
+          promptDiv.innerHTML = `
+            <p class="mb-3 text-lg font-semibold text-gray-800">Defina seu nome de usuário!</p>
+            <input id="name-input" class="w-full border px-3 py-2 rounded mb-3" placeholder="Seu nome" />
+            <button id="save-name" class="w-full bg-green-600 text-white py-2 rounded hover:bg-green-700 transition">Começar</button>
+          `;
+          container.appendChild(promptDiv);
 
-        document.getElementById("save-name").onclick = async () => {
-          const v = document.getElementById("name-input").value.trim();
-          if (v) {
-            await user.setName(v);
-            renderWelcome();
-          } else alert("Coloca um nome aí, maninho!");
-        };
-      } else {
-        const card = document.createElement("div");
-        card.className = "bg-white p-6 rounded-xl shadow-md flex flex-col gap-2";
-        card.innerHTML = `
-          <div class="flex justify-between items-center">
-            <div>
-              <p class="text-lg font-bold text-gray-800">Olá, <span id="username-display">${name}</span> 👋</p>
-              <p class="text-sm text-gray-600">Pontuação total: <span id="score-display">${score}</span> pontos</p>
+          document.getElementById("save-name").onclick = async () => {
+            const v = document.getElementById("name-input").value.trim();
+            if (v) {
+              await user.setName(v);
+              renderWelcome();
+            } else {
+              alert("Coloca um nome aí, maninho!");
+            }
+          };
+        } else {
+          const card = document.createElement("div");
+          card.className = "bg-white p-6 rounded-xl shadow-md flex flex-col gap-2";
+          card.innerHTML = `
+            <div class="flex justify-between items-center">
+              <div>
+                <p class="text-lg font-bold text-gray-800">Olá, <span id="username-display">${name}</span> 👋</p>
+                <p class="text-sm text-gray-600">Pontuação total: <span id="score-display">${score}</span> pontos</p>
+              </div>
+              <button id="change-name" class="text-xs text-blue-600 underline hover:text-blue-800">Mudar</button>
             </div>
-            <button id="change-name" class="text-xs text-blue-600 underline hover:text-blue-800">Mudar</button>
-          </div>
-        `;
-        container.appendChild(card);
+          `;
+          container.appendChild(card);
 
-        document.getElementById("change-name").onclick = () => {
-          user.clearName();
-          renderWelcome();
-        };
+          document.getElementById("change-name").onclick = () => {
+            user.clearName();
+            renderWelcome();
+          };
+        }
       }
-    }
 
-    document.addEventListener("DOMContentLoaded", renderWelcome);
+      renderWelcome();
+    });
   </script>
 </body>
 </html>
