@@ -57,9 +57,12 @@
 
     async function saveToSupabase(username, score) {
       try {
-        const { error } = await supabase.from("users").upsert([
-          { username, score }
-        ]);
+        const { error } = await supabase
+          .from("users")
+          .upsert(
+            { username, score }, 
+            { onConflict: "username" } // diz qual coluna usar de chave
+          );
         if (error) throw error;
         console.log("Salvo com sucesso no Supabase!");
       } catch (err) {
